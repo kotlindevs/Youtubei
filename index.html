@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Youtubei
+    </title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+        {
+            "imports": {
+            "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js';
+
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    <style>
+        table {
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        td {
+            width: 200px;
+            height: 150px;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Youtubei 📺</h1>
+    <table>
+        <tr>
+            <th>
+                <md-outlined-text-field id="search" label="Search something..."></md-outlined-text-field>
+            </th>
+            <th>
+                <md-filled-tonal-button id="searchData" type="submit"
+                    style="border-radius: 12px;">Search</md-filled-tonal-button>
+            </th>
+        </tr>
+    </table>
+    <table id="dynamicTable"></table>
+    <script>
+        const searchData = document.getElementById("searchData")
+        const dynamicTable = document.getElementById("dynamicTable")
+        const dynamicBody = dynamicTable.querySelector('tbody')
+        const search = document.getElementById('search')
+
+        searchData.addEventListener('click', () => {
+            fetch("/sendData", {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search: search.value
+                })
+            }).then(
+                response => response.json()
+            ).then(
+                result => {
+                    if (dynamicBody) {
+                        dynamicBody.innerHTML = '';
+                    } else {
+                        dynamicTable.innerHTML = '';
+                    }
+                    result.forEach(element => {
+                        const row = dynamicTable.insertRow();
+                        if (element.videoImage) {
+                            const imgCell = row.insertCell();
+                            const img = document.createElement('img');
+                            img.src = element.videoImage
+                            img.height = 128
+                            img.style.borderRadius = '12px'
+                            imgCell.appendChild(img)
+                        }
+                        const cell1 = row.insertCell();
+                        cell1.textContent = element.videoTitle;
+                    });
+                    console.log(result)
+                }
+            ).catch(
+                error => console.log(error)
+            )
+        });
+    </script>
+</body>
+
+</html>
