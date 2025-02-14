@@ -39,8 +39,23 @@ yt_search <- function(search_key) {
     item_sec_list <- contents$itemSectionRenderer
     contents <- item_sec_list$contents
     for (content in contents) {
-      video_title <- content$videoRenderer$title$runs
-      print(video_title)
+      video_renderer <- content[["videoRenderer"]]
+      video_id <- video_renderer[["videoId"]]
+      # thumbnail <- video_renderer[["thumbnail"]]
+      # thumbnail_parse <- thumbnail$thumbnails
+      # video_image <- unlist(lapply(thumbnail_parse, function(df) {
+      #   df$url[df$width == 720]
+      # }))
+      # title <- video_renderer$title$runs
+      # video_title <- unlist(lapply(title, function(df) {
+      #   df$text
+      # }))
+      view_count <- video_renderer$viewCountText$simpleText
+      video_view_count <- unlist(lapply(view_count, function(df) {
+        df
+      }))
+      mydf <- data.frame(video_id, video_view_count)
+      print(mydf)
     }
   }
 }
