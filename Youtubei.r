@@ -210,3 +210,85 @@ if (status_code(youtube) == response_okay) {
     }
   }
 }
+
+# ------------------------------------------------------------------------------------
+# library(httr)
+# library(jsonlite)
+
+# fetch_continuation <- function(response) {
+#     return(response[["contents"]][["twoColumnSearchResultsRenderer"]]
+#     [["primaryContents"]][["sectionListRenderer"]][["contents"]]
+#     [["continuationItemRenderer"]][["continuationEndpoint"]]
+#     [["continuationCommand"]][["token"]])
+# }
+
+# print_token <- function(response) {
+#     print(response)
+# }
+
+# tokens <- c()
+
+# youtube_search <- "https://www.youtube.com/youtubei/v1/search"
+# response_okay <- 200
+# s_quary <- "bhagwan mahavir surat"
+# s_params <- "EgWKAQIQAWoKEAkQChAFEAMQBA%3D%3D"
+
+# header <- add_headers(
+#     "Content-Type" = "application/json",
+#     "prettyPrint"  = "false"
+# )
+
+# body <- list(
+#     context = list(
+#         client = list(
+#             clientName = "WEB",
+#             clientVersion = "2.20250219.07.00"
+#         )
+#     ), query = s_quary,
+#     continuation = "",
+#     params = s_params
+# )
+
+# format_body <- toJSON(
+#     body,
+#     auto_unbox = TRUE,
+#     pretty = TRUE
+# )
+
+# youtube <- POST(
+#     url = youtube_search,
+#     config = header,
+#     body = format_body
+# )
+
+# result <- fromJSON(content(youtube, as = "text", encoding = "UTF-8"))
+# token <- fetch_continuation(result)[2]
+
+# if (!is.na(token)) {
+#     next_token <- token
+#     duplicated_token <- 1
+#     while (TRUE) {
+#         body[["continuation"]] <- token
+
+#         yt <- POST(
+#             url = youtube_search, config = header, body = format_body
+#         )
+
+#         if (status_code(yt) == response_okay) {
+#             res <- content(yt, as = "text", encoding = "UTF-8")
+#             toLst <- fromJSON(res)
+#             token <- fetch_continuation(toLst)[2]
+#             if (next_token != token) {
+#                 print_token(token)
+#                 next_token <- token
+#             }
+#             if (is.na(token)) {
+#                 break()
+#             }
+#         } else {
+#             print("Response not okay !")
+#         }
+#     }
+# } else {
+#     print("No token found !")
+# }
