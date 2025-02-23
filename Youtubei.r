@@ -1,6 +1,16 @@
 library(httr)
 library(jsonlite)
 
+response_okay <- 200
+header <- add_headers(
+  "Content-Type" = "application/json",
+  "prettyPrint"  = "false"
+)
+
+interval <- function(i) {
+  cat(":::> Please wait...", i, "sec !\n")
+}
+
 youtube_token <- function(yt_url, yt_query, yt_params, yt_body) {
   tokens <- c()
   fetch_continuation <- function(response) {
@@ -59,6 +69,7 @@ youtube_token <- function(yt_url, yt_query, yt_params, yt_body) {
         if (!is.null(token)) {
           if (next_token != token) {
             tokens <- c(tokens, token)
+            interval(i)
             i <- i + 1
             next_token <- token
           } else {
@@ -77,7 +88,6 @@ youtube_token <- function(yt_url, yt_query, yt_params, yt_body) {
     print("No token found !")
   }
 }
-
 
 videos <- data.frame(
   video_id = character(), video_title = character(),
@@ -121,7 +131,7 @@ video_renderer <- function(video_renderer) {
     vtitle
   }))
 
-  max_df <- max(
+  min_df <- min(
     length(video_id),
     length(channel_title),
     length(video_title),
@@ -131,21 +141,13 @@ video_renderer <- function(video_renderer) {
     length(published_time)
   )
 
-  if (length(published_time) < max_df) {
-    length(published_time) <- max_df
-  } else if (length(short_views) < max_df) {
-    length(short_views) <- max_df
-  } else if (length(published_time) < max_df) {
-    length(published_time) <- max_df
-  } else if (length(channel_id) < max_df) {
-    length(channel_id) <- max_df
-  } else if (length(video_id) < max_df) {
-    length(video_id) <- max_df
-  } else if (length(channel_title) < max_df) {
-    length(channel_title) <- max_df
-  } else if (length(video_title) < max_df) {
-    length(video_title) <- max_df
-  }
+  video_id <- video_id[1:min_df]
+  channel_id <- channel_id[1:min_df]
+  channel_title <- channel_title[1:min_df]
+  video_title <- video_title[1:min_df]
+  video_length <- video_length[1:min_df]
+  short_views <- short_views[1:min_df]
+  published_time <- published_time[1:min_df]
 
   df <- data.frame(
     video_id, video_title, channel_id,
@@ -208,85 +210,111 @@ item_section_renderer <- function(results) {
   }
 }
 
-youtube_search <- "https://www.youtube.com/youtubei/v1/search"
-response_okay <- 200
-s_quary <- "krishna"
-s_params <- "EgWKAQIQAWoKEAkQChAFEAMQBA%3D%3D"
+print("::: Youtube :::")
+print("===============")
+print("<1> Search")
+print("<2> Browse")
+print("<3> Channel")
+print("<4> Shorts")
+print("<6> Playlist")
+print("<5> Youtube music")
 
-header <- add_headers(
-  "Content-Type" = "application/json",
-  "prettyPrint"  = "false"
-)
+cat("\n")
 
-body <- list(
-  context = list(
-    client = list(
-      clientName = "WEB",
-      clientVersion = "2.20250219.07.00"
-    )
-  ), query = s_quary,
-  continuation = "",
-  params = s_params
-)
+input <- readline(prompt = "Select the option => ")
+print(input)
+if (input == 1) {
+  print("::: Search :::")
+  print("==============")
+  cat("\n")
+  user_key <- readline(prompt = "Search something....")
 
-format_body <- toJSON(
-  body,
-  auto_unbox = TRUE,
-  pretty = TRUE
-)
+  youtube_search <- "https://www.youtube.com/youtubei/v1/search"
+  s_quary <- user_key
+  s_params <- "EgWKAQIQAWoKEAkQChAFEAMQBA%3D%3D"
 
-interval <- function(i) {
-  cat(":::> Please wait...", i, "sec !\n")
-}
+  body <- list(
+    context = list(
+      client = list(
+        clientName = "WEB",
+        clientVersion = "2.20250219.07.00"
+      )
+    ), query = s_quary,
+    continuation = "",
+    params = s_params
+  )
 
-youtube <- POST(
-  url = youtube_search,
-  config = header,
-  body = format_body
-)
+  format_body <- toJSON(
+    body,
+    auto_unbox = TRUE,
+    pretty = TRUE
+  )
 
-if (status_code(youtube) == response_okay) {
-  content <- content(youtube, as = "text", encoding = "UTF-8")
-  result <- fromJSON(content)
-  content <- contents(result = result)
-}
+  youtube <- POST(
+    url = youtube_search,
+    config = header,
+    body = format_body
+  )
 
-tokens <- youtube_token(yt_url = youtube_search, yt_query = s_quary,
-                        yt_params = s_params, yt_body = format_body)
-if (!is.null(tokens)) {
-  i <- 1
-  while (i <= length(tokens)) {
-
-    body <- list(
-      context = list(
-        client = list(
-          clientName = "WEB",
-          clientVersion = "2.20250219.07.00"
-        )
-      ), query = s_quary,
-      continuation = tokens[i],
-      params = s_params
-    )
-
-    cat("\n\n\n=====> Token [", i, "]", tokens[i], "\n\n\n")
-
-    format_body <- toJSON(
-      body,
-      auto_unbox = TRUE,
-      pretty = TRUE
-    )
-
-    youtube <- POST(
-      url = youtube_search,
-      config = header,
-      body = format_body
-    )
-
-    if (status_code(youtube) == response_okay) {
-      content <- content(youtube, as = "text", encoding = "UTF-8")
-      result <- fromJSON(content)
-      content <- contents(result = result)
-    }
-    i <- i + 1
+  if (status_code(youtube) == response_okay) {
+    content <- content(youtube, as = "text", encoding = "UTF-8")
+    result <- fromJSON(content)
+    content <- contents(result = result)
   }
+
+  option <- readline(prompt = "Want to load more videos ? (Y/n)")
+
+  print(option)
+  if (option == "Y" || option == "y") {
+    tokens <- youtube_token(yt_url = youtube_search, yt_query = s_quary,
+                            yt_params = s_params, yt_body = format_body)
+
+    if (!is.null(tokens)) {
+      i <- 1
+      while (i <= length(tokens)) {
+
+        body <- list(
+          context = list(
+            client = list(
+              clientName = "WEB",
+              clientVersion = "2.20250219.07.00"
+            )
+          ), query = s_quary,
+          continuation = tokens[i],
+          params = s_params
+        )
+
+        cat("\n\n\n=====> Token [", i, "]", tokens[i], "\n\n\n")
+
+        format_body <- toJSON(
+          body,
+          auto_unbox = TRUE,
+          pretty = TRUE
+        )
+
+        youtube <- POST(
+          url = youtube_search,
+          config = header,
+          body = format_body
+        )
+
+        if (status_code(youtube) == response_okay) {
+          content <- content(youtube, as = "text", encoding = "UTF-8")
+          result <- fromJSON(content)
+          content <- contents(result = result)
+        }
+        i <- i + 1
+      }
+    }
+  } else if (option == "N" || option == "n") {
+    print("Aborted !")
+  } else {
+    print("Invalid option !")
+  }
+} else if (input == 2) {
+  print("::: Browse :::")
+  print("==============")
+  cat("\n")
+
+  
 }
