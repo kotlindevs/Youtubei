@@ -213,10 +213,9 @@ item_section_renderer <- function(results) {
 print("::: Youtube :::")
 print("===============")
 print("<1> Search")
-print("<2> Browse")
-print("<3> Channel")
-print("<4> Shorts")
-print("<6> Playlist")
+print("<2> Channel")
+print("<3> Shorts")
+print("<4> Playlist")
 print("<5> Youtube music")
 
 cat("\n")
@@ -312,9 +311,7 @@ if (input == 1) {
     print("Invalid option !")
   }
 } else if (input == 2) {
-  print("::: Browse :::")
+  print("::: Channel :::")
   print("==============")
   cat("\n")
-
-  
 }
