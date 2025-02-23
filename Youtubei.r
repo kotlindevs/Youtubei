@@ -23,6 +23,132 @@ channel_uid <- function(result) {
          [["params"]][[1]][["value"]][4])
 }
 
+browse_contents <- function(result) {
+  tab_renderer <- (result[["contents"]][["twoColumnBrowseResultsRenderer"]]
+                   [["tabs"]][["tabRenderer"]])
+  tabs <- tab_renderer[["title"]]
+  tabs_bid <- tab_renderer[["endpoint"]][["browseEndpoint"]][["browseId"]]
+  tabs_params <- tab_renderer[["endpoint"]][["browseEndpoint"]][["params"]]
+  cat("\n======::: Tabs :::======\n")
+  i <- 1
+  for (tab in tabs) {
+    if (!is.na(tab)) {
+      cat("\n ->> <", i, ">", tab)
+    }
+    i <- i + 1
+  }
+  cat("\n\n")
+
+  input <- 1#readline(prompt = "\nSelect the tab : ") no lint
+  if (input <= length(tabs)) {
+    if (input == 1) {
+      tabs_params(id = tabs_bid[1], param = tabs_params[1])
+    }else if (input == 2) {
+      tabs_params(id = tabs_bid[2], param = tabs_params[2])
+    }else if (input == 3) {
+      tabs_params(id = tabs_bid[3], param = tabs_params[3])
+    }else if (input == 4) {
+      tabs_params(id = tabs_bid[4], param = tabs_params[4])
+    }else if (input == 5) {
+      tabs_params(id = tabs_bid[5], param = tabs_params[5])
+    }else if (input == 6) {
+      tabs_params(id = tabs_bid[6], param = tabs_params[6])
+    }else if (input == 7) {
+      tabs_params(id = tabs_bid[7], param = tabs_params[7])
+    }
+  } else {
+    cat("Error : Invalid number !")
+  }
+}
+
+tabs_const <- function(result) {
+  tab_renderer <- (result[["contents"]][["twoColumnBrowseResultsRenderer"]]
+                   [["tabs"]][["tabRenderer"]])
+  content <- tab_renderer[["content"]]
+  contents <- content[["sectionListRenderer"]][["contents"]]
+  for (cont in contents) {
+    if ("itemSectionRenderer" %in% names(cont)) {
+      item_sec_ren <- cont[["itemSectionRenderer"]]
+      content <- item_sec_ren[["contents"]]
+      for (c in content) {
+        if ("shelfRenderer" %in% names(c)) {
+          shelf_renderer <- c[["shelfRenderer"]]
+          main_title <- shelf_renderer[["title"]][["runs"]][[1]][["text"]]
+          cat("\n\n===========================")
+          cat("\n # ", main_title, " # \n")
+          cat("===========================\n\n")
+          main_c <- (shelf_renderer[["content"]][["horizontalListRenderer"]]
+                     [["items"]])
+          for (it in main_c) {
+            if ("gridVideoRenderer" %in% names(it)) {
+              grid_vid_ren <- it[["gridVideoRenderer"]]
+              video_id <- grid_vid_ren[["videoId"]]
+              video_title <- grid_vid_ren[["title"]][["simpleText"]]
+              published_time <- (grid_vid_ren[["publishedTimeText"]]
+                                 [["simpleText"]])
+              short_views <- (grid_vid_ren[["shortViewCountText"]]
+                              [["simpleText"]])
+              video_length <- (grid_vid_ren[["thumbnailOverlays"]])
+              video_length <- unlist(lapply(video_length, function(len) {
+                (len[["thumbnailOverlayTimeStatusRenderer"]]
+                 [["text"]][["simpleText"]])
+              }))
+              channel_id <- (grid_vid_ren[["shortBylineText"]]
+                             [["runs"]])
+              channel_id <- unlist(lapply(channel_id, function(channel) {
+                (channel[["navigationEndpoint"]]
+                 [["browseEndpoint"]][["browseId"]])
+              }))
+              channel_title <- (grid_vid_ren[["shortBylineText"]]
+                                [["runs"]])
+              channel_title <- unlist(lapply(channel_title, function(channel) {
+                channel[["text"]]
+              }))
+              sf_vid <- data.frame(video_id, channel_id,
+                                   channel_title, video_title,
+                                   video_length, short_views, published_time)
+              print(sf_vid)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+tabs_params <- function(id, param) {
+  youtube_browse <- "https://www.youtube.com/youtubei/v1/browse"
+
+  body <- list(
+    context = list(
+      client = list(
+        clientName = "WEB",
+        clientVersion = "2.20250219.07.00"
+      )
+    ), browseId = id, params = param
+  )
+
+  format_body <- toJSON(
+    body,
+    auto_unbox = TRUE,
+    pretty = TRUE
+  )
+
+  youtube <- POST(
+    url = youtube_browse,
+    config = header,
+    body = format_body
+  )
+
+  if (status_code(youtube) == response_okay) {
+    content <- content(youtube, as = "text", encoding = "UTF-8")
+    result <- fromJSON(content)
+    tabs_const(result = result)
+  } else {
+    cat("\nError : Response not okay !\n")
+  }
+}
+
 channel_metadata <- function(result) {
   channel_id <- channel_uid(result = result)
   metadata <- result[["metadata"]]
@@ -392,9 +518,11 @@ if (input == 1) {
     if (status_code(youtube) == response_okay) {
       content <- content(youtube, as = "text", encoding = "UTF-8")
       result <- fromJSON(content)
+      brow_con <- browse_contents(result = result)
       channel_metadata(result = result)
+      tabs_const(result = result)
     } else {
-      cat("\nError : Oops, response not okay !\n")
+      cat("\nError : Response not okay !\n")
     }
   } else {
     cat("Please insert valid channel ID :>")
