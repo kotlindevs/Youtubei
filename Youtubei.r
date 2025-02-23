@@ -11,6 +11,53 @@ interval <- function(i) {
   cat(":::> Please wait...", i, "sec !\n")
 }
 
+channel_subscribers <- function(result) {
+  return(result[["header"]][["pageHeaderRenderer"]] #nolint
+         [["content"]][["pageHeaderViewModel"]][["metadata"]]
+         [["contentMetadataViewModel"]][["metadataRows"]][["metadataParts"]]
+         [[2]][["text"]][["content"]])
+}
+
+channel_uid <- function(result) {
+  return(result[["responseContext"]][["serviceTrackingParams"]] #nolint
+         [["params"]][[1]][["value"]][4])
+}
+
+channel_metadata <- function(result) {
+  channel_id <- channel_uid(result = result)
+  metadata <- result[["metadata"]]
+  channel_metadata_renderer <- metadata[["channelMetadataRenderer"]]
+  channel_title <- channel_metadata_renderer[["title"]]
+  channel_desc <- channel_metadata_renderer[["description"]]
+  external_id <- channel_metadata_renderer[["externalId"]]
+  owner_url <- channel_metadata_renderer[["ownerUrls"]]
+  channel_url <- channel_metadata_renderer[["channelUrl"]]
+  channel_subs <- channel_subscribers(result = result)
+  c_subscribers <- channel_subs[1]
+  c_videos <- channel_subs[2]
+  vanity_channel_url <- channel_metadata_renderer[["vanityChannelUrl"]]
+  is_family_safe <- channel_metadata_renderer[["isFamilySafe"]]
+  facebook_id <- channel_metadata_renderer[["facebookProfileId"]]
+  country_codes <- channel_metadata_renderer[["availableCountryCodes"]]
+
+  cat("\n=======================")
+  cat("\n::: Channel Details :::\n")
+  cat("=======================\n")
+  cat(" ->>> Id             : ", channel_id, "\n")
+  cat(" ->>> Title          : ", channel_title, "\n")
+  cat(" ->>> Description    : ", channel_desc, "\n")
+  cat(" ->>> Url            : ", channel_url, "\n")
+  cat(" ->>> Subscribers    : ", c_subscribers, "\n")
+  cat(" ->>> Videos         : ", c_videos, "\n")
+  cat(" ->>> Family safe    : ", is_family_safe, "\n")
+  cat(" ->>> External ID    : ", external_id, "\n")
+  cat(" ->>> Owner url      : ", owner_url, "\n")
+  cat(" ->>> Facebook       : ", facebook_id, "\n")
+  cat(" ->>> Vanity url     : ", vanity_channel_url, "\n")
+  cat(" ->>> Supported countries : \n")
+  print(country_codes)
+}
+
 youtube_token <- function(yt_url, yt_query, yt_params, yt_body) {
   tokens <- c()
   fetch_continuation <- function(response) {
@@ -210,22 +257,23 @@ item_section_renderer <- function(results) {
   }
 }
 
-print("::: Youtube :::")
-print("===============")
-print("<1> Search")
-print("<2> Channel")
-print("<3> Shorts")
-print("<4> Playlist")
-print("<5> Youtube music")
+cat("\n===============")
+cat("\n::: Youtube :::")
+cat("\n===============")
+cat("\n<1> Search")
+cat("\n<2> Channel")
+cat("\n<3> Shorts")
+cat("\n<4> Playlist")
+cat("\n<5> Youtube music")
 
 cat("\n")
 
-input <- readline(prompt = "Select the option => ")
-print(input)
+input <- readline(prompt = "\nSelect the option => ")
 if (input == 1) {
-  print("::: Search :::")
-  print("==============")
-  cat("\n")
+  cat("\n==============")
+  cat("::: Search :::")
+  cat("==============\n")
+
   user_key <- readline(prompt = "Search something....")
 
   youtube_search <- "https://www.youtube.com/youtubei/v1/search"
@@ -311,7 +359,44 @@ if (input == 1) {
     print("Invalid option !")
   }
 } else if (input == 2) {
-  print("::: Channel :::")
-  print("==============")
-  cat("\n")
+  cat("\n==============")
+  cat("::: Channel :::")
+  cat("==============\n")
+
+  cat("ChannelID Example = UCK8sQmJBp8GCxrOtXWBpyEA\n")
+  input <- readline(prompt = "\nEnter the channel id : ")
+  if (!is.null(input)) {
+    youtube_browse <- "https://www.youtube.com/youtubei/v1/browse"
+
+    body <- list(
+      context = list(
+        client = list(
+          clientName = "WEB",
+          clientVersion = "2.20250219.07.00"
+        )
+      ), browseId = input
+    )
+
+    format_body <- toJSON(
+      body,
+      auto_unbox = TRUE,
+      pretty = TRUE
+    )
+
+    youtube <- POST(
+      url = youtube_browse,
+      config = header,
+      body = format_body
+    )
+
+    if (status_code(youtube) == response_okay) {
+      content <- content(youtube, as = "text", encoding = "UTF-8")
+      result <- fromJSON(content)
+      channel_metadata(result = result)
+    } else {
+      cat("\nError : Oops, response not okay !\n")
+    }
+  } else {
+    cat("Please insert valid channel ID :>")
+  }
 }
