@@ -343,7 +343,7 @@ contents <- function(result) {
   }
 
   if ("onResponseReceivedCommands" %in% names(result)) {
-    on_response_rec_cmd <- result[["onResponseReceivedCommands"]] 
+    on_response_rec_cmd <- result[["onResponseReceivedCommands"]]
     append_con_item <- on_response_rec_cmd[["appendContinuationItemsAction"]]
     continuation_items <- append_con_item[["continuationItems"]][[1]]
     item_section_renderer <- continuation_items[["itemSectionRenderer"]]
