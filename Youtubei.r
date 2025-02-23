@@ -39,7 +39,7 @@ browse_contents <- function(result) {
   }
   cat("\n\n")
 
-  input <- 1#readline(prompt = "\nSelect the tab : ") no lint
+  input <- readline(prompt = "\nSelect the tab : ")
   if (input <= length(tabs)) {
     if (input == 1) {
       tabs_params(id = tabs_bid[1], param = tabs_params[1])
@@ -518,9 +518,8 @@ if (input == 1) {
     if (status_code(youtube) == response_okay) {
       content <- content(youtube, as = "text", encoding = "UTF-8")
       result <- fromJSON(content)
+      channel_md <- channel_metadata(result = result)
       brow_con <- browse_contents(result = result)
-      channel_metadata(result = result)
-      tabs_const(result = result)
     } else {
       cat("\nError : Response not okay !\n")
     }
